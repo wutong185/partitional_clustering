@@ -96,6 +96,17 @@ def page_number(canvas, doc):
     canvas.restoreState()
 
 
+def _can_write(path):
+    """Проверяет, можно ли писать в файл (он может быть открыт в PDF-читалке)."""
+    if not os.path.exists(path):
+        return True
+    try:
+        with open(path, "ab"):
+            return True
+    except OSError:
+        return False
+
+
 def main():
     base_df = pd.read_csv(os.path.join(RES, "base_error_vs_k.csv"))
     noise_df = pd.read_csv(os.path.join(RES, "noise_error_matrix.csv"))
@@ -376,14 +387,23 @@ def main():
         "пояснениями — пункт 7 выполнен."))
 
     # ---------- сборка ----------
-    out = os.path.join(BASE, OUT_NAME)
-    doc = SimpleDocTemplate(out, pagesize=A4,
+    # Если предыдущий PDF открыт в читалке (WPS/Edge/Acrobat), запись в него
+    # невозможна — сохраняем под другим именем, чтобы не ронять весь прогон.
+    out_path = os.path.join(BASE, OUT_NAME)
+    if not _can_write(out_path):
+        alt_name = OUT_NAME.replace(".pdf", "_обновленный.pdf")
+        out_path = os.path.join(BASE, alt_name)
+        print("ВНИМАНИЕ: исходный PDF занят другой программой (открыт в читалке).")
+        print("          Сохраняем отчёт как:", alt_name)
+        print("          Закройте PDF и запустите снова, чтобы обновить основной файл.")
+
+    doc = SimpleDocTemplate(out_path, pagesize=A4,
                             rightMargin=20 * mm, leftMargin=20 * mm,
                             topMargin=18 * mm, bottomMargin=20 * mm,
                             title="Отчет: Разделительная кластеризация",
                             author="wutong185")
     doc.build(story, onFirstPage=page_number, onLaterPages=page_number)
-    print("Отчёт сформирован:", out)
+    print("Отчёт сформирован:", out_path)
 
 
 if __name__ == "__main__":
