@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# ОС / редакторы
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# временные файлы
+*.log
+~$*
